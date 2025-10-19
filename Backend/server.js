@@ -207,78 +207,54 @@ cron.schedule("0 9 * * *", async () => {
   }
 });
 
-// ----- AI Chat Endpoint -----
-// Minimal robust wrapper around Gemini (fallback-friendly)
-let genAI = null;
-let model = null;
-let geminiAvailable = false;
+let genAI, model;
+let geminiAvailable = true;
 
 if (process.env.GEMINI_API_KEY) {
   try {
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    // API for library may differ; keep defensive
-    model = genAI.getGenerativeModel
-      ? genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
-      : null;
-    geminiAvailable = Boolean(model);
-    console.log("✅ Gemini AI initialized");
+    model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    console.log('✅ Gemini AI initialized');
   } catch (err) {
-    console.error("❌ Gemini AI initialization error:", err.message || err);
+    console.error('❌ Gemini AI initialization error:', err.message);
     geminiAvailable = false;
   }
 } else {
-  console.log("⚠ Gemini API key not found, using fallback mode");
+  console.log('⚠️ Gemini API key not found, using fallback mode');
   geminiAvailable = false;
 }
 
-app.post("/api/chat", async (req, res) => {
+// ----- AI Chat Endpoint -----
+app.post('/api/chat', async (req, res) => {
   if (!geminiAvailable) {
-    // return helpful fallback so frontend still works
-    return res.status(200).json({
-      message: {
-        role: "assistant",
-        content:
-          "AI assistant is currently unavailable. Please try again later.",
-      },
-    });
+    return res.status(501).json({ error: "Gemini AI not available" });
   }
-
+  
   const { messages } = req.body;
   try {
-    // Convert messages to the expected shape for the SDK if needed
-    const contents = (messages || []).map((m) => ({
-      role: m.role || "user",
-      parts: [{ text: m.content || m.message || "" }],
+    const content = messages.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.content }]
     }));
 
-    // Defensive call depending on SDK
-    const result = await model.generateContent
-      ? await model.generateContent({ contents })
-      : await model.generate({ prompt: contents });
+    const result = await model.generateContent({ contents: content });
+    const response = await result.response.text();
 
-    // SDK response handling differs; try common properties
-    const text =
-      result?.response?.text ||
-      result?.output?.[0]?.content?.[0]?.text ||
-      (typeof result === "string" ? result : null);
-
-    const reply = text || "I'm currently unable to process your request.";
-
-    res.json({ message: { role: "assistant", content: reply } });
+    res.json({ message: { role: 'assistant', content: response } });
   } catch (err) {
     console.error("Gemini API error:", err.message || err);
-    res.status(200).json({
-      message: {
-        role: "assistant",
-        content:
-          "I'm currently unable to process your request. Please try again later.",
-      },
+    res.status(200).json({ 
+      message: { 
+        role: 'assistant', 
+        content: "I'm currently unable to process your request. Please try again later." 
+      } 
     });
   }
 });
 
+
 // ---------------- Start Server -----------------
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 server.listen(PORT, () =>
   console.log(`🚀 Server + Socket.IO running on port ${PORT}`)
 );

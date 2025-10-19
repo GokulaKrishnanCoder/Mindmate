@@ -1,30 +1,43 @@
-import Chat from "../models/Chat.model.js";
+import Message from "../models/messageModel.js";
 import User from "../models/User.model.js";
 
-// Only used for fetching
-export const getMessages = async (req, res) => {
-  const { userId } = req.params;
-  const myId = req.user._id;
-
+// ✅ Get all users except current one
+export const getUsers = async (req, res) => {
   try {
-    const messages = await Chat.find({
-      $or: [
-        { sender: myId, receiver: userId },
-        { sender: userId, receiver: myId },
-      ],
-    }).sort({ createdAt: 1 });
-
-    res.json(messages);
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching messages" });
+    const users = await User.find({ _id: { $ne: req.user.id } }).select("-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
-export const getUsers = async (req, res) => {
+// ✅ Get messages between current user and another user
+export const getMessages = async (req, res) => {
   try {
-    const users = await User.find({}, "name email _id");
-    res.json(users);
-  } catch (err) {
-    res.status(500).json({ message: "Error fetching users" });
+    const { receiverId } = req.params;
+    const messages = await Message.find({
+      $or: [
+        { sender: req.user.id, receiver: receiverId },
+        { sender: receiverId, receiver: req.user.id },
+      ],
+    });
+    res.json(messages);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ✅ Send a new message
+export const sendMessage = async (req, res) => {
+  try {
+    const { receiverId, content } = req.body;
+    const message = await Message.create({
+      sender: req.user.id,
+      receiver: receiverId,
+      content,
+    });
+    res.status(201).json(message);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };

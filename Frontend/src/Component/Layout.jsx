@@ -1,5 +1,5 @@
 import { Container, Navbar, Nav } from "react-bootstrap";
-import { Link,Outlet } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import { House, Gamepad2, Phone, User } from "lucide-react";
 
 const Layout = ({ children }) => {
@@ -25,9 +25,8 @@ const Layout = ({ children }) => {
 
       {/* Page Content */}
       <main className="flex-grow-1 mt-5 mb-5">
-        <Outlet/>
+        <Outlet />
         <div className="content-wrapper">{children}</div>
-        
       </main>
 
       {/* Desktop Footer */}
@@ -40,7 +39,7 @@ const Layout = ({ children }) => {
       {/* Mobile Bottom Nav */}
       <nav className="mobile-footer d-md-none bg-primary text-white fixed-bottom">
         <div className="d-flex justify-content-around py-2">
-          <Link to="/" className="text-white text-center">
+          <Link to="/home" className="text-white text-center">
             <House size={22} />
             <div style={{ fontSize: "12px" }}>Home</div>
           </Link>
@@ -48,9 +47,9 @@ const Layout = ({ children }) => {
             <Gamepad2 size={22} />
             <div style={{ fontSize: "12px" }}>Games</div>
           </Link>
-          <Link to="/contact" className="text-white text-center">
+          <Link to="/call" className="text-white text-center">
             <Phone size={22} />
-            <div style={{ fontSize: "12px" }}>Contact</div>
+            <div style={{ fontSize: "12px" }}>Caretaker</div>
           </Link>
           <Link to="/profile" className="text-white text-center">
             <User size={22} />

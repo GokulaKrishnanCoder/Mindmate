@@ -83,3 +83,153 @@ body.dark .table thead {
 body.dark .table tbody tr {
   border-color: #444;
 }
+.login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.login-content {
+  display: flex;
+  width: 85%;
+  height: 80vh;
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+.welcome-section {
+  flex: 1;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: left;
+  padding: 3rem;
+}
+
+.welcome-text h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.welcome-text h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.welcome-text p {
+  font-size: 1rem;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.geometric-shape-1,
+.geometric-shape-2 {
+  position: absolute;
+  border-radius: 50%;
+  opacity: 0.2;
+}
+
+.geometric-shape-1 {
+  width: 200px;
+  height: 200px;
+  background: #fff;
+  top: 50px;
+  right: 60px;
+}
+
+.geometric-shape-2 {
+  width: 300px;
+  height: 300px;
+  background: #fff;
+  bottom: 80px;
+  left: 50px;
+}
+
+.form-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f9fafb;
+}
+
+.form-container {
+  width: 80%;
+  max-width: 400px;
+}
+
+.form-container h2 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+}
+
+.form-subtitle {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  margin-bottom: 1rem;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  padding: 0.75rem 1rem;
+}
+
+.input-icon {
+  margin-right: 0.5rem;
+}
+
+.input-wrapper input {
+  border: none;
+  outline: none;
+  flex: 1;
+  background: transparent;
+  font-size: 1rem;
+}
+
+.sign-in-btn {
+  width: 100%;
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.sign-in-btn:hover {
+  background: #4338ca;
+}
+
+.sign-up-link {
+  text-align: center;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.sign-up-link a {
+  color: #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+}

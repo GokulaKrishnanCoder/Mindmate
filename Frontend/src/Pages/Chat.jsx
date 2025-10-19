@@ -17,7 +17,9 @@ import { io } from "socket.io-client";
 import { useLocation } from "react-router-dom";
 
 const useWindowWidth = () => {
-  const [width, setWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1024);
+  const [width, setWidth] = useState(
+    typeof window !== "undefined" ? window.innerWidth : 1024
+  );
   useEffect(() => {
     const onResize = () => setWidth(window.innerWidth);
     window.addEventListener("resize", onResize);
@@ -26,7 +28,7 @@ const useWindowWidth = () => {
   return width;
 };
 
-const MessageBubble = memo(({ msg, isMe, chosenColor, isAi }) => {
+const MessageBubble = memo(({ msg, isMe, chosenColor }) => {
   const bubbleColor = isMe ? chosenColor : "#e9ecef";
   const textColor = isMe ? "#fff" : "#000";
   const timeText =
@@ -37,7 +39,9 @@ const MessageBubble = memo(({ msg, isMe, chosenColor, isAi }) => {
     });
 
   return (
-    <div className={`d-flex mb-3 ${isMe ? "justify-content-end" : "justify-content-start"}`}>
+    <div
+      className={`d-flex mb-3 ${isMe ? "justify-content-end" : "justify-content-start"}`}
+    >
       <div
         style={{
           background: bubbleColor,
@@ -49,10 +53,14 @@ const MessageBubble = memo(({ msg, isMe, chosenColor, isAi }) => {
           boxShadow: "0 2px 6px rgba(0,0,0,0.06)",
         }}
       >
-        <div style={{ whiteSpace: "pre-wrap" }}>{msg.message || msg.content || ""}</div>
+        <div style={{ whiteSpace: "pre-wrap" }}>
+          {msg.message || msg.content || ""}
+        </div>
         <div
           className="text-end small mt-1"
-          style={{ color: isMe ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.45)" }}
+          style={{
+            color: isMe ? "rgba(255,255,255,0.75)" : "rgba(0,0,0,0.45)",
+          }}
         >
           {timeText}
         </div>
@@ -76,7 +84,6 @@ const Chat = () => {
   };
   const chosenColor = colorMap[color] || "#3b82f6";
   const isDark = theme === "dark";
-  const isMobile = width < 768;
 
   const storedUser = (() => {
     try {
@@ -87,7 +94,7 @@ const Chat = () => {
   })();
   const currentUserId = storedUser?._id || storedUser?.id;
 
-  const [users, setUsers] = useState([]); // combined list: users + caretakers + ai
+  const [users, setUsers] = useState([]);
   const [caretakers, setCaretakers] = useState([]);
   const [activeUser, setActiveUser] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -95,47 +102,62 @@ const Chat = () => {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [socket, setSocket] = useState(null);
   const [newMessage, setNewMessage] = useState("");
+  const [showSidebar, setShowSidebar] = useState(true);
   const chatEndRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // socket connection
-  useEffect(() => {
-    const apiBase = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
-    const socketUrl = apiBase.replace(/\/api\/?$/, "") || "http://localhost:3000";
-    const token = localStorage.getItem("token");
+useEffect(() => {
+  const apiBase =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:3000/api";
+  const socketUrl = apiBase.replace(/\/api\/?$/, "") || "http://localhost:3000";
+  const token = localStorage.getItem("token");
 
-    const s = io(socketUrl, { auth: { token } });
-    setSocket(s);
+  if (!token) {
+    console.warn("⚠️ No token found for Socket.IO connection.");
+    return;
+  }
 
-    s.on("receive_message", (chat) => {
-      // if activeUser is the conversation partner, append; else ignore or could show badge
-      setMessages((prev) => [...prev, chat]);
-    });
+  const s = io(socketUrl, { auth: { token } });
+  setSocket(s);
 
-    s.on("connect_error", (err) => {
-      console.error("Socket connect_error:", err);
-    });
+  s.on("receive_message", (chat) => {
+    setMessages((prev) => [...prev, chat]);
+  });
 
-    return () => {
-      s.disconnect();
-      setSocket(null);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  s.on("connect_error", (err) => {
+    console.error("Socket connect_error:", err);
+  });
 
-  // fetch lists (users + caretakers)
+  return () => {
+    s.disconnect();
+    setSocket(null);
+  };
+}, []);
+
+
   useEffect(() => {
     const fetchLists = async () => {
       try {
-        const [usersRes, caretakersRes] = await Promise.all([API.get("/chat/users"), API.get("/caretaker")]);
-        const mappedUsers = (usersRes.data || []).map((u) => ({ ...u, type: "user" }));
-        const mappedCaretakers = (caretakersRes.data || []).map((c) => ({ ...c, type: "caretaker" }));
+        const [usersRes, caretakersRes] = await Promise.all([
+          API.get("/chat/users"),
+          API.get("/caretaker"),
+        ]);
+        const mappedUsers = (usersRes.data || []).map((u) => ({
+          ...u,
+          type: "user",
+        }));
+        const mappedCaretakers = (caretakersRes.data || []).map((c) => ({
+          ...c,
+          type: "caretaker",
+        }));
         setUsers([...mappedUsers, ...mappedCaretakers]);
         setCaretakers(mappedCaretakers);
 
-        // if navigated with caretakerId in state, preselect
         const preCaretakerId = location.state?.caretakerId;
         if (preCaretakerId) {
-          const found = mappedCaretakers.find((c) => String(c._id) === String(preCaretakerId));
+          const found = mappedCaretakers.find(
+            (c) => String(c._id) === String(preCaretakerId)
+          );
           if (found) setActiveUser({ ...found, type: "caretaker" });
         }
       } catch (err) {
@@ -143,18 +165,13 @@ const Chat = () => {
       }
     };
     fetchLists();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);
 
-  // fetch messages when activeUser changes
   useEffect(() => {
     let cancelled = false;
     const loadMessages = async () => {
       if (!activeUser) return;
-      if (activeUser.type === "ai") {
-        // AI uses local aiMessages state
-        return;
-      }
+      if (activeUser.type === "ai") return;
       setIsLoadingMessages(true);
       setMessages([]);
       try {
@@ -173,7 +190,6 @@ const Chat = () => {
     };
   }, [activeUser]);
 
-  // scroll to bottom when messages or aiMessages change
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, aiMessages]);
@@ -185,7 +201,6 @@ const Chat = () => {
       receiverType: activeUser.type,
       message: text,
     };
-    // optimistic append
     const optimistic = {
       _id: `local-${Date.now()}`,
       sender: currentUserId,
@@ -198,27 +213,46 @@ const Chat = () => {
   };
 
   const handleAiSend = async (text) => {
-    // append user message to aiMessages
-    const userMsg = { message: text, role: "user", createdAt: new Date().toISOString() };
+    const userMsg = {
+      message: text,
+      role: "user",
+      createdAt: new Date().toISOString(),
+    };
     setAiMessages((prev) => [...prev, userMsg]);
 
     try {
       const res = await API.post("/chat", {
         messages: [
-          ...(aiMessages || []).map((m) => ({ role: m.role || "assistant", content: m.message || m.content })),
+          ...(aiMessages || []).map((m) => ({
+            role: m.role || "assistant",
+            content: m.message || m.content,
+          })),
           { role: "user", content: text },
         ],
       });
 
-      const botContent = res.data?.message?.content || res.data?.reply || "Sorry, I couldn't process that.";
-      const botMsg = { message: botContent, role: "assistant", createdAt: new Date().toISOString() };
+      const botContent =
+        res.data?.message?.content ||
+        res.data?.reply ||
+        "Sorry, I couldn't process that.";
+      const botMsg = {
+        message: botContent,
+        role: "assistant",
+        createdAt: new Date().toISOString(),
+      };
       setAiMessages((prev) => [...prev, botMsg]);
     } catch (err) {
       console.error("AI chat error:", err);
-      setAiMessages((prev) => [...prev, { message: "AI is unavailable right now.", role: "assistant", createdAt: new Date().toISOString() }]);
+      setAiMessages((prev) => [
+        ...prev,
+        {
+          message: "AI is unavailable right now.",
+          role: "assistant",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
     }
   };
-
   const handleSend = (e) => {
     e?.preventDefault();
     const text = newMessage.trim();
@@ -239,6 +273,14 @@ const Chat = () => {
     cursor: "pointer",
   });
 
+  const filteredUsers = users.filter(
+    (u) =>
+      u.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      u.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const isMobile = width < 768;
+
   return (
     <Container
       fluid
@@ -248,37 +290,82 @@ const Chat = () => {
         background: isDark ? "#0b1220" : "#f8f9fa",
         color: isDark ? "#fff" : "#000",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      <Row className="g-0" style={{ height: "100%" }}>
+      <Row
+        className="g-0 flex-grow-1"
+        style={{
+          height: "100%",
+          flexWrap: "nowrap",
+          overflow: "hidden",
+        }}
+      >
         {/* Sidebar */}
-        {!isMobile || !activeUser ? (
-          <Col
-            md={4}
-            lg={3}
-            style={{
-              height: "100%",
-              borderRight: `1px solid ${isDark ? "#1f2937" : "#dee2e6"}`,
-              background: isDark ? "#0f172a" : "#fff",
-              overflowY: "auto",
-            }}
-          >
-            <div style={{ padding: 16 }}>
-              <h6 style={{ color: chosenColor }}>Users</h6>
-              <ListGroup variant="flush">
-                {users.filter(u => u.type === "user").map((u) => (
+        <Col
+          md={4}
+          lg={3}
+          style={{
+            height: "100%",
+            borderRight: `1px solid ${isDark ? "#1f2937" : "#dee2e6"}`,
+            background: isDark ? "#0f172a" : "#fff",
+            overflowY: "auto",
+            display: isMobile && !showSidebar ? "none" : "block",
+            width: isMobile ? "100%" : undefined,
+            position: isMobile ? "absolute" : "relative",
+            zIndex: 3,
+          }}
+        >
+          <div style={{ padding: 16 }}>
+            {isMobile && activeUser && (
+              <Button
+                variant="light"
+                className="mb-3"
+                onClick={() => setShowSidebar(false)}
+              >
+                <BsArrowLeft /> Back
+              </Button>
+            )}
+
+            <Form.Group className="mb-3">
+              <Form.Control
+                type="text"
+                placeholder="Search contacts"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoComplete="off"
+              />
+            </Form.Group>
+
+            <h6 style={{ color: chosenColor }}>Users</h6>
+            <ListGroup variant="flush">
+              {filteredUsers
+                .filter((u) => u.type === "user")
+                .map((u) => (
                   <ListGroup.Item
                     key={`user-${u._id}`}
                     action
-                    onClick={() => setActiveUser({ ...u, type: "user" })}
-                    active={activeUser?._id === u._id && activeUser?.type === "user"}
-                    style={sidebarItemStyle(activeUser?._id === u._id && activeUser?.type === "user")}
+                    onClick={() => {
+                      setActiveUser({ ...u, type: "user" });
+                      if (isMobile) setShowSidebar(false);
+                    }}
+                    active={
+                      activeUser?._id === u._id &&
+                      activeUser?.type === "user"
+                    }
+                    style={sidebarItemStyle(
+                      activeUser?._id === u._id &&
+                        activeUser?.type === "user"
+                    )}
                     className="d-flex align-items-center"
                   >
                     <Figure.Image
                       width={36}
                       height={36}
-                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(u.name || "User")}&background=random`}
+                      src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        u.name || "User"
+                      )}&background=random`}
                       roundedCircle
                       className="me-2"
                     />
@@ -288,47 +375,76 @@ const Chat = () => {
                     </div>
                   </ListGroup.Item>
                 ))}
-              </ListGroup>
+            </ListGroup>
 
-              <h6 style={{ color: chosenColor, marginTop: 16 }}>Caretakers</h6>
-              <ListGroup variant="flush">
-                {caretakers.map((c) => (
+            <h6 style={{ color: chosenColor, marginTop: 16 }}>Caretakers</h6>
+            <ListGroup variant="flush">
+              {filteredUsers
+                .filter((c) => c.type === "caretaker")
+                .map((c) => (
                   <ListGroup.Item
                     key={`caretaker-${c._id}`}
                     action
-                    onClick={() => setActiveUser({ ...c, type: "caretaker" })}
-                    active={activeUser?._id === c._id && activeUser?.type === "caretaker"}
-                    style={sidebarItemStyle(activeUser?._id === c._id && activeUser?.type === "caretaker")}
+                    onClick={() => {
+                      setActiveUser({ ...c, type: "caretaker" });
+                      if (isMobile) setShowSidebar(false);
+                    }}
+                    active={
+                      activeUser?._id === c._id &&
+                      activeUser?.type === "caretaker"
+                    }
+                    style={sidebarItemStyle(
+                      activeUser?._id === c._id &&
+                        activeUser?.type === "caretaker"
+                    )}
                     className="d-flex align-items-center justify-content-between"
                   >
                     <div className="d-flex align-items-center">
                       <Figure.Image
                         width={36}
                         height={36}
-                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(c.name || "Caretaker")}&background=random`}
+                        src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                          c.name || "Caretaker"
+                        )}&background=random`}
                         roundedCircle
                         className="me-2"
                       />
                       <div>
                         <div>{c.name}</div>
-                        <div className="small text-muted">{c.role || "Caretaker"}</div>
+                        <div className="small text-muted">
+                          {c.role || "Caretaker"}
+                        </div>
                       </div>
                     </div>
-                    <Badge bg={isDark ? "secondary" : "light"} style={{ color: isDark ? "#ddd" : chosenColor, border: `1px solid ${chosenColor}` }}>
+                    <Badge
+                      bg={isDark ? "secondary" : "light"}
+                      style={{
+                        color: isDark ? "#ddd" : chosenColor,
+                        border: `1px solid ${chosenColor}`,
+                      }}
+                    >
                       Caretaker
                     </Badge>
                   </ListGroup.Item>
                 ))}
-              </ListGroup>
+            </ListGroup>
 
-              <h6 style={{ color: chosenColor, marginTop: 16 }}>AI Assistant</h6>
-              <ListGroup variant="flush">
-                <ListGroup.Item
-                  action
-                  onClick={() => setActiveUser({ name: "MindMate AI", type: "ai", _id: "ai" })}
-                  active={activeUser?.type === "ai"}
-                  style={sidebarItemStyle(activeUser?.type === "ai")}
-                >
+            <h6 style={{ color: chosenColor, marginTop: 16 }}>AI Assistant</h6>
+            <ListGroup variant="flush">
+              <ListGroup.Item
+                action
+                onClick={() => {
+                  setActiveUser({
+                    name: "MindMate AI",
+                    type: "ai",
+                    _id: "ai",
+                  });
+                  if (isMobile) setShowSidebar(false);
+                }}
+                active={activeUser?.type === "ai"}
+                style={sidebarItemStyle(activeUser?.type === "ai")}
+              >
+                <div className="d-flex align-items-center justify-content-between">
                   <div className="d-flex align-items-center">
                     <Figure.Image
                       width={36}
@@ -342,16 +458,22 @@ const Chat = () => {
                       <div className="small text-muted">Virtual assistant</div>
                     </div>
                   </div>
-                  <Badge bg="info" style={{ background: chosenColor, color: "#fff" }}>
+                  <Badge
+                    bg="info"
+                    style={{
+                      background: chosenColor,
+                      color: "#fff",
+                    }}
+                  >
                     AI
                   </Badge>
-                </ListGroup.Item>
-              </ListGroup>
-            </div>
-          </Col>
-        ) : null}
+                </div>
+              </ListGroup.Item>
+            </ListGroup>
+          </div>
+        </Col>
 
-        {/* Chat area */}
+        {/* Chat Area */}
         <Col
           md={8}
           lg={9}
@@ -360,104 +482,151 @@ const Chat = () => {
             display: "flex",
             flexDirection: "column",
             background: isDark ? "#071027" : "#f1f3f5",
+            alignItems: "center",
+            justifyContent: activeUser ? "flex-start" : "center",
+            position: "relative",
+            overflow: "hidden",
+            width: isMobile ? "100%" : undefined,
           }}
         >
-          {/* Header */}
-          <div
-            style={{
-              padding: "10px 16px",
-              borderBottom: `1px solid ${isDark ? "#111827" : "#e9ecef"}`,
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-            }}
-          >
-            {isMobile && activeUser && (
-              <Button variant="link" className="p-0" onClick={() => setActiveUser(null)} style={{ color: chosenColor }}>
-                <BsArrowLeft size={22} />
-              </Button>
-            )}
-            {activeUser ? (
-              <>
+          {!activeUser ? (
+            <div
+              style={{
+                width: 340,
+                background: isDark ? "#0b1220" : "#fff",
+                boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
+                borderRadius: 16,
+                textAlign: "center",
+                padding: 32,
+                margin: "auto",
+              }}
+            >
+              <Figure.Image
+                width={54}
+                height={64}
+                src={`https://ui-avatars.com/api/?name=MindMate+AI&background=random`}
+                roundedCircle
+                className="mb-3"
+              />
+              <h4 style={{ color: chosenColor, marginBottom: 8 }}>MindMate</h4>
+              <div style={{ fontSize: "100%" }}>
+                Welcome to chat!<br />
+                Select a conversation to start chatting.
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Chat Header */}
+              <div
+                style={{
+                  padding: "10px 16px",
+                  borderBottom: `1px solid ${isDark ? "#111827" : "#e9ecef"}`,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  width: "100%",
+                }}
+              >
+                {isMobile && (
+                  <Button
+                    variant="link"
+                    className="p-0 me-2"
+                    onClick={() => setShowSidebar(true)}
+                  >
+                    <BsArrowLeft size={20} color={chosenColor} />
+                  </Button>
+                )}
                 <Figure.Image
                   width={40}
                   height={40}
-                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(activeUser.name || "User")}&background=random`}
+                  src={`https://ui-avatars.com/api/?name=${encodeURIComponent(
+                    activeUser.name || "User"
+                  )}&background=random`}
                   roundedCircle
                   className="me-2"
                 />
                 <div>
                   <div style={{ fontWeight: 600 }}>{activeUser.name}</div>
-                  <div className="small text-muted">{activeUser.type === "caretaker" ? activeUser.role || "Caretaker" : activeUser.email || ""}</div>
+                  <div className="small text-muted">
+                    {activeUser.type === "caretaker"
+                      ? activeUser.role || "Caretaker"
+                      : activeUser.email || ""}
+                  </div>
                 </div>
-              </>
-            ) : (
-              <div style={{ fontWeight: 600 }}>Select a conversation</div>
-            )}
-          </div>
+              </div>
 
-          {/* Messages */}
-          <div style={{ flex: 1, overflowY: "auto", padding: 16 }}>
-            {activeUser ? (
-              activeUser.type === "ai" ? (
-                aiMessages.length === 0 ? (
-                  <div className="text-center text-muted">No conversation yet. Ask anything.</div>
-                ) : (
-                  aiMessages.map((m, idx) => (
-                    <MessageBubble
-                      key={`ai-${idx}-${m.createdAt}`}
-                      msg={m}
-                      isMe={m.role === "user"}
-                      chosenColor={chosenColor}
-                      isAi={m.role === "assistant"}
+              {/* Messages */}
+              <div
+                style={{
+                  flex: 1,
+                  overflowY: "auto",
+                  padding: 16,
+                  width: "100%",
+                }}
+              >
+                {activeUser.type === "ai"
+                  ? aiMessages.map((m, idx) => (
+                      <MessageBubble
+                        key={`ai-${idx}-${m.createdAt}`}
+                        msg={m}
+                        isMe={m.role === "user"}
+                        chosenColor={chosenColor}
+                      />
+                    ))
+                  : isLoadingMessages ? (
+                      <div className="d-flex justify-content-center align-items-center h-100">
+                        <Spinner animation="border" style={{ color: chosenColor }} />
+                      </div>
+                    ) : (
+                      messages.map((m, idx) => (
+                        <MessageBubble
+                          key={m._id || `msg-${idx}-${m.createdAt}`}
+                          msg={m}
+                          isMe={
+                            String(m.sender?.id || m.sender) ===
+                            String(currentUserId)
+                          }
+                          chosenColor={chosenColor}
+                        />
+                      ))
+                    )}
+                <div ref={chatEndRef} />
+              </div>
+
+              {/* Input */}
+              <div
+                style={{
+                  padding: 12,
+                  borderTop: `1px solid ${isDark ? "#111827" : "#e9ecef"}`,
+                  background: isDark ? "#071029" : "#fff",
+                  width: "100%",
+                }}
+              >
+                <Form onSubmit={handleSend}>
+                  <div className="d-flex gap-2">
+                    <Form.Control
+                      type="text"
+                      placeholder={`Message ${activeUser.name}`}
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      autoComplete="off"
                     />
-                  ))
-                )
-              ) : isLoadingMessages ? (
-                <div className="d-flex justify-content-center align-items-center h-100">
-                  <Spinner animation="border" style={{ color: chosenColor }} />
-                </div>
-              ) : messages.length === 0 ? (
-                <div className="text-center text-muted">No messages yet. Say hi 👋</div>
-              ) : (
-                messages.map((m, idx) => (
-                  <MessageBubble
-                    key={m._id || `msg-${idx}-${m.createdAt}`}
-                    msg={m}
-                    isMe={String(m.sender?.id || m.sender) === String(currentUserId)}
-                    chosenColor={chosenColor}
-                  />
-                ))
-              )
-            ) : (
-              <div className="d-flex h-100 align-items-center justify-content-center text-muted">
-                <div>
-                  <h5>Welcome to MindMate Chat</h5>
-                  <p>Select a user, caretaker or AI to start chatting</p>
-                </div>
+                    <Button
+                      type="submit"
+                      disabled={!newMessage.trim()}
+                      style={{
+                        background: chosenColor,
+                        borderColor: chosenColor,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <BsSend />
+                    </Button>
+                  </div>
+                </Form>
               </div>
-            )}
-            <div ref={chatEndRef} />
-          </div>
-
-          {/* Input */}
-          <div style={{ padding: 12, borderTop: `1px solid ${isDark ? "#111827" : "#e9ecef"}`, background: isDark ? "#071029" : "#fff" }}>
-            <Form onSubmit={handleSend}>
-              <div className="d-flex gap-2">
-                <Form.Control
-                  type="text"
-                  placeholder={activeUser ? `Message ${activeUser.name}` : "Select a conversation"}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  disabled={!activeUser}
-                  autoComplete="off"
-                />
-                <Button type="submit" disabled={!activeUser || !newMessage.trim()} style={{ background: chosenColor, borderColor: chosenColor }}>
-                  <BsSend />
-                </Button>
-              </div>
-            </Form>
-          </div>
+            </>
+          )}
         </Col>
       </Row>
     </Container>

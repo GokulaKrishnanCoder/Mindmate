@@ -5,6 +5,7 @@ const caretakerSchema = new mongoose.Schema({
   name: { type: String, required: true },
   role: { type: String },
   status: { type: String, default: "Available" },
+  phone: { type: String, required: true },
   specialties: [{ type: String }],
   initials: { type: String },
   rating: { type: Number, default: 0 },

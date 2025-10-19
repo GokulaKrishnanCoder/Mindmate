@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { toast } from "react-toastify";
 import { Mosaic } from "react-loading-indicators";
 import API from "../api";
+import "../App.css";
 
 const Login = () => {
   const [name, setName] = useState("");
@@ -13,20 +14,22 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { theme } = useTheme(); // <-- Get theme
+  const { theme } = useTheme();
 
-  // Theme-based classes
   const bgClass = theme === "dark" ? "bg-dark text-light" : "bg-light text-dark";
-  const cardBg = theme === "dark" ? "bg-secondary text-light" : "bg-white text-dark";
 
-  const handleRegister = (e) => {
-    e.preventDefault();
-    navigate("/register");
-  };
+  // 🔐 Redirect if already logged in
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/home");
+    }
+  }, [navigate]);
 
+  // ✅ Success toast after registration
   useEffect(() => {
     if (localStorage.getItem("registered") === "true") {
-      toast.success("Registered successfully!", {
+      toast.success("Registered successfully! Please login to continue.", {
         position: "top-right",
         autoClose: 3000,
       });
@@ -34,6 +37,7 @@ const Login = () => {
     }
   }, []);
 
+  // 🧾 Login API
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -45,7 +49,7 @@ const Login = () => {
         navigate("/home");
       }
     } catch {
-      alert("Login failed");
+      toast.error("Invalid credentials. Please try again!");
     } finally {
       setIsLoading(false);
     }
@@ -60,83 +64,108 @@ const Login = () => {
   }
 
   return (
-    <div className={`d-flex justify-content-center align-items-center min-vh-100 ${bgClass}`}>
-      <div className={`card shadow-lg p-4 ${cardBg}`} style={{ width: "400px" }}>
-        <h2 className="text-center mb-4 fw-bold">Login</h2>
-
-        {/* Login Form */}
-        <form onSubmit={handleLogin}>
-          <div className="mb-3">
-            <label className="form-label">Username</label>
-            <input
-              type="text"
-              className="form-control"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+    <div className="login-container">
+      <div className="login-content">
+        {/* 🌿 Left Section */}
+        <div className="welcome-section">
+          <div className="welcome-text">
+            <h1>Welcome Back to MindMate 🧠</h1>
+            <h2>Where Every Thought Finds Clarity</h2>
+            <p>
+              Reconnect with your personalized space for cognitive growth and mental wellness.  
+              Track your progress, play games that sharpen your mind, and stay motivated with a 
+              caring community that supports your journey to better mental fitness.
+            </p>
+            <p className="tagline">
+              “Every login is a step toward a sharper, healthier you.”
+            </p>
           </div>
-
-          <div className="mb-3">
-            <label className="form-label">Email</label>
-            <input
-              type="email"
-              className="form-control"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="mb-3">
-            <label className="form-label">Password</label>
-            <input
-              type="password"
-              className="form-control"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <button type="submit" className="btn btn-primary w-100">
-            Login
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="d-flex align-items-center my-3">
-          <hr className="flex-grow-1" />
-          <span className="mx-2 text-muted">OR</span>
-          <hr className="flex-grow-1" />
+          <div className="geometric-shape-1"></div>
+          <div className="geometric-shape-2"></div>
         </div>
 
-        {/* Google Login */}
-        <div className="d-flex justify-content-center">
-          <GoogleLogin
-            onSuccess={async (credentialResponse) => {
-              const decoded = jwtDecode(credentialResponse.credential);
-              const email = decoded.email;
-              try {
-                const res = await API.post("/auth/googleRegister", { email });
-                localStorage.setItem("token", res.data.token);
-                localStorage.setItem("user", JSON.stringify(res.data.user));
-                navigate("/home");
-              } catch (err) {
-                alert("Google Registration failed");
-              }
-            }}
-            onError={() => alert("Google Login Failed")}
-          />
-        </div>
+        {/* 🔑 Right Section */}
+        <div className="form-section">
+          <div className="form-container">
+            <h2>Sign In</h2>
+            <p className="form-subtitle">Welcome to your MindMate world.</p>
 
-        {/* Signup link */}
-        <p className="text-center text-muted mt-3">
-          Don’t have an account?{" "}
-          <a href="/register" onClick={handleRegister} className="text-decoration-none">
-            Sign Up
-          </a>
-        </p>
+            <form onSubmit={handleLogin}>
+              <div className="input-group">
+                <div className="input-wrapper">
+                  <span className="input-icon">👤</span>
+                  <input
+                    type="text"
+                    placeholder="Username"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <div className="input-wrapper">
+                  <span className="input-icon">📧</span>
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="input-group">
+                <div className="input-wrapper">
+                  <span className="input-icon">🔒</span>
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              </div>
+
+              <button type="submit" className="sign-in-btn">
+                Login
+              </button>
+            </form>
+
+            {/* Divider */}
+            <div className="divider"><span>Or</span></div>
+
+            {/* 🌐 Google Login */}
+            <div className="google-login-btn">
+              <GoogleLogin
+                onSuccess={async (credentialResponse) => {
+                  const decoded = jwtDecode(credentialResponse.credential);
+                  const email = decoded.email;
+                  try {
+                    const res = await API.post("/auth/googleRegister", { email });
+                    localStorage.setItem("token", res.data.token);
+                    localStorage.setItem("user", JSON.stringify(res.data.user));
+                    navigate("/home");
+                  } catch (err) {
+                    toast.error("Google Login failed");
+                  }
+                }}
+                onError={() => toast.error("Google Login Failed")}
+              />
+            </div>
+
+            {/* Signup link */}
+            <div className="sign-up-link">
+              Don’t have an account?{" "}
+              <a href="/register" onClick={() => navigate("/register")}>
+                Sign Up
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

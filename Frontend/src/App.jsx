@@ -8,29 +8,33 @@ import GamePlay from "./Pages/GamePlay";
 import Contact from "./Pages/Contact";
 import Settings from "./Pages/Settings";
 import Profile from "./Pages/Profile";
-import { GoogleOAuthProvider } from "@react-oauth/google";
-import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import Login from "./Pages/Login";
 import Register from "./Pages/Register";
 import NotFound from "./Pages/Notfound";
+import ProtectedRoute from "./Pages/ProtectedRoute";
+import PublicRoute from "./Pages/PublicRoute";
+import { GoogleOAuthProvider } from "@react-oauth/google";
+import { ToastContainer } from "react-toastify";
 import { ThemeProvider } from "./Context/ThemeContext";
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const ClientId = import.meta.env.VITE_CLIENT_ID;
+
   return (
     <ThemeProvider>
       <Router>
         <GoogleOAuthProvider clientId={ClientId}>
           <ToastContainer />
           <Routes>
-            {/* Login and Register NOT inside Layout */}
-            <Route path="/" element={<Login />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
 
-            {/* All other routes inside Layout */}
-            <Route element={<Layout />}>
+            {/* Public routes → only accessible when NOT logged in */}
+            <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+            <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+
+            {/* Protected routes → accessible ONLY when logged in */}
+            <Route element={<ProtectedRoute><Layout /></ProtectedRoute>}>
               <Route path="/home" element={<Home />} />
               <Route path="/games" element={<Games />} />
               <Route path="/chat" element={<Chat />} />
@@ -39,8 +43,10 @@ function App() {
               <Route path="/settings" element={<Settings />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/play/:gameId" element={<GamePlay />} />
-              <Route path="*" element={<NotFound />} />
             </Route>
+
+            {/* Fallback route */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </GoogleOAuthProvider>
       </Router>

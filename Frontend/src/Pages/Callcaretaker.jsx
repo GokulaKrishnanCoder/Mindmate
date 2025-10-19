@@ -14,22 +14,7 @@ const CallCaretaker = () => {
   useEffect(() => {
     API.get("/caretaker").then((res) => {
       const data = res.data || [];
-
-      // ✅ Assign phone numbers & make only first 2 active for Voice Call
-      const phoneNumbers = [
-        "9787156029",
-        "9875578629",
-        "9875578671",
-        "9875578676",
-        "9875578674",
-      ];
-
-      const updated = data.map((c, index) => ({
-        ...c,
-        phone: phoneNumbers[index % phoneNumbers.length],
-        isActive: index < 2, // only first 2 can call
-      }));
-      setCaretakers(updated);
+      setCaretakers(data);
     });
   }, []);
 
@@ -43,9 +28,20 @@ const CallCaretaker = () => {
   };
   const accent = colorMap[color] || "#3b82f6";
 
+  // helper to interpret availability from different shapes
+  const isAvailable = (caretaker) => {
+    if (!caretaker) return false;
+    // prefer explicit boolean field
+    if (typeof caretaker.available === "boolean") return caretaker.available;
+    if (typeof caretaker.isActive === "boolean") return caretaker.isActive;
+    // check status string (e.g. "Available", "available")
+    const status = String(caretaker.status || caretaker.state || "").toLowerCase();
+    return status === "available" || status === "online" || status === "active";
+  };
+
   // ✅ Voice Call handler
   const handleVoiceCall = async (caretaker) => {
-    if (!caretaker.isActive) return;
+    if (!isAvailable(caretaker)) return;
 
     // Open dialer
     window.location.href = `tel:${caretaker.phone}`;
@@ -83,7 +79,7 @@ const CallCaretaker = () => {
                 size="lg"
                 style={{ background: "#dc2626", border: "none" }}
                 onClick={() => {
-                  const emergencyNumber = "9842578618";
+                  const emergencyNumber = "9842578618" || "9787156029";
                   window.location.href = `tel:${emergencyNumber}`;
                 }}
               >
@@ -110,7 +106,7 @@ const CallCaretaker = () => {
             <Col md={4} key={caretaker._id ?? caretaker.id} className="mb-4">
               <Card
                 className={`shadow-sm h-100 rounded-4 border-0 ${
-                  !caretaker.isActive ? "opacity-75" : ""
+                  !isAvailable(caretaker) ? "opacity-75" : ""
                 }`}
               >
                 <Card.Body className="text-center">
@@ -157,16 +153,16 @@ const CallCaretaker = () => {
                   <Button
                     className="w-100 mt-2"
                     style={{
-                      background: caretaker.isActive ? accent : "#ccc",
-                      color: caretaker.isActive ? "white" : "#666",
+                      background: isAvailable(caretaker) ? accent : "#ccc",
+                      color: isAvailable(caretaker) ? "white" : "#666",
                       border: "none",
-                      opacity: caretaker.isActive ? 1 : 0.6,
-                      cursor: caretaker.isActive ? "pointer" : "not-allowed",
+                      opacity: isAvailable(caretaker) ? 1 : 0.6,
+                      cursor: isAvailable(caretaker) ? "pointer" : "not-allowed",
                     }}
                     onClick={() =>
-                      caretaker.isActive && handleVoiceCall(caretaker)
+                      isAvailable(caretaker) && handleVoiceCall(caretaker)
                     }
-                    disabled={!caretaker.isActive}
+                    disabled={!isAvailable(caretaker)}
                   >
                     📞 Voice Call
                   </Button>

@@ -1,11 +1,12 @@
 import express from "express";
-import { getMessages, getUsers } from "../controllers/chat.controller.js";
+import { getUsers, getMessages, sendMessage } from "../controllers/chat.controller.js";
 import auth from "../middleware/auth.js";
 
-const chatRouter = express.Router();
+const router = express.Router();
 
-// Only fetching users and messages via REST
-chatRouter.get("/users", auth, getUsers);
-chatRouter.get("/messages/:userId", auth, getMessages);
+// ✅ All routes are protected
+router.get("/users", auth, getUsers);
+router.get("/messages/:receiverId", auth, getMessages);
+router.post("/send", auth, sendMessage);
 
-export default chatRouter;
+export default router;
