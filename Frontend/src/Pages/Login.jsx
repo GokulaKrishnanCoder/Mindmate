@@ -7,12 +7,13 @@ import { toast } from "react-toastify";
 import { Mosaic } from "react-loading-indicators";
 import API from "../api";
 import "../App.css";
-
+import { FiEye, FiEyeOff } from "react-icons/fi";
 const Login = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { theme } = useTheme();
 
@@ -88,7 +89,7 @@ const Login = () => {
         <div className="form-section">
           <div className="form-container">
             <h2>Sign In</h2>
-            <p className="form-subtitle">Welcome to your MindMate world.</p>
+            <p className="form-subtitle">Welcome to your MindMate world</p>
 
             <form onSubmit={handleLogin}>
               <div className="input-group">
@@ -118,15 +119,37 @@ const Login = () => {
               </div>
 
               <div className="input-group">
-                <div className="input-wrapper">
+                <div className="input-wrapper with-toggle">
                   <span className="input-icon">🔒</span>
                   <input
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="toggle-password-btn"
+                    style={{
+                      position: "absolute",
+                      right: "10px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      background: "transparent",
+                      border: "none",
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "inherit",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {showPassword ? <FiEyeOff size={20} /> : <FiEye size={20} />}
+                  </button>
                 </div>
               </div>
 
@@ -136,7 +159,7 @@ const Login = () => {
             </form>
 
             {/* Divider */}
-            <div className="divider"><span>Or</span></div>
+            <div className="divider d-flex justify-content-center"><span>Or</span></div>
 
             {/* 🌐 Google Login */}
             <div className="google-login-btn">

@@ -191,6 +191,8 @@ body.dark .table tbody tr {
   border-radius: 12px;
   border: 1px solid #ddd;
   padding: 0.75rem 1rem;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .input-icon {
@@ -201,8 +203,15 @@ body.dark .table tbody tr {
   border: none;
   outline: none;
   flex: 1;
+  width: 100%;
   background: transparent;
   font-size: 1rem;
+}
+
+/* Add extra right padding when an inline action icon (like eye toggle) exists */
+.input-wrapper.with-toggle {
+  position: relative;
+  padding-right: 2.75rem; /* space for the eye icon */
 }
 
 .sign-in-btn {

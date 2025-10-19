@@ -346,7 +346,7 @@ const Games = () => {
                         color: chosenColor,
                       }}
                     >
-                      <Info size={14} className="me-1" /> {showHowTo ? "Hide" : "Show"}
+                      <Info size={14} className="me-1 text-white" /> {showHowTo ? "Hide" : "Show"}Info
                     </Button>
                   </div>
 
